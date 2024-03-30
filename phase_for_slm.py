@@ -1,0 +1,2 @@
+import Wavefront        
+wf = Wavefront()
