@@ -1,2 +1,3 @@
-import Wavefront        
+from Wavefront import Wavefront   
 wf = Wavefront()
+
