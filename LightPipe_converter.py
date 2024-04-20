@@ -49,23 +49,21 @@ if __name__ == "__main__":
     w0/=(g1+g2-2*g2)**0.5
     F=LightPipes.Begin(size,labda,N)
     F=LightPipes.GaussLaguerre(F, w0, p=np_, l=nl_, A=1.0, ecs=0)
-    wf = import_light_pipe(F, "cpu")
+    wf = import_light_pipe(F, "")
     start_time = time.time()
     wf.propagate_angular_spec(d2)
     wf.ThinLens(focalLength=fM2)
     wf.propagate_angular_spec(d3)
     wf.ThinLens(f2)
     wf.propagate_angular_spec(d4)
-    wf.CylindricalXLens(f3)
+    wf.CylindricalLens(f3, angle = 45)
     wf.propagate_angular_spec(d5)
-    wf.CylindricalXLens(f4)
+    wf.CylindricalLens(f4, angle = 45)
     wf.propagate_angular_spec(27e-3)
     wf.propagate_angular_spec(25e-3) # propagate to have sufficient large beam size
-    ffs=37e-3
-    wf.ThinLens(ffs)
-    wf.propagate_angular_spec(ffs)
-    wf.ThinLens(ffs)
-    wf.propagate_angular_spec(100e-3)
+    plt.imshow(wf.get_intensity())
+    plt.show()
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     print('Elapsed time: ', elapsed_time)
