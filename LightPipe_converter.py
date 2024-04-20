@@ -15,8 +15,6 @@ if __name__ == "__main__":
     labda=632.8e-9
     size=8e-3
     N=2**12
-
-
     R1=600e-3
     R2=437e-3
     np_=0

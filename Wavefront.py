@@ -268,13 +268,12 @@ class WavefrontStack():
                 }
             ],
             sliders=sliders
-    )
-
+        )
+        fig.show()
 
 if __name__ == "__main__":
 
-    # nb_frames = 31
-    wf = Wavefront(pixelNumber= 2**10, Lfield = 10e-3, wl = 1064e-9, device = 'cpu')
+    wf = Wavefront(pixelNumber= 2**8, Lfield = 10e-3, wl = 1064e-9, device = 'cpu')
     wfStack = WavefrontStack(wf, to_device=True)
     wf.Gauss(beamFwhm=1e-3)
     wf.Vortex(Radius=1e-3)
@@ -289,94 +288,94 @@ if __name__ == "__main__":
 
     wfStack.save('test.h5')
     wfStack.load('test.h5')
-    
     wfStack_compressed = np.zeros((256,256, wfStack.stack.shape[2]))
     for i in range(0, wfStack.stack.shape[2]):
         wfStack_compressed[:,:,i] = image = cv2.resize(np.abs(wfStack.stack[:,:,i]), (256, 256), interpolation=cv2.INTER_LINEAR) 
     
     I = np.abs(wfStack_compressed)
-    max_intensity = np.max(I)
-    print(max_intensity)
-    # print(wfStack.stack[:,:,1].shape)
-    # fig = go.Figure(data=[go.Surface(z=np.abs(wfStack.stack))])
-    nb_frames = 60
-    r, c =  I[:,:,0].shape
-    fig = go.Figure(frames=[go.Frame(data=go.Surface(
-        z=k * np.ones((r, c)),
-        surfacecolor=(np.abs(I[:,:,60-k])),
-        cmin=0, cmax=5
-        ),
-        name=str(k) # you need to name the frame for the animation to behave properly
-        )
-        for k in range(nb_frames)])
-    k = 0
-# Add data to be displayed before animation starts
-    fig.add_trace(go.Surface(
-        z=6.7 * np.ones((r, c)),
-        surfacecolor=(np.abs(I[:,:, 60-k])),
-        colorscale='jet',
-        cmin=0, cmax=5,
-        colorbar=dict(thickness=20, ticklen=4)
-        ))
+    wfStack.plot_slices_3d(I)
+#     max_intensity = np.max(I)
+#     print(max_intensity)
+#     # print(wfStack.stack[:,:,1].shape)
+#     # fig = go.Figure(data=[go.Surface(z=np.abs(wfStack.stack))])
+#     nb_frames = 60
+#     r, c =  I[:,:,0].shape
+#     fig = go.Figure(frames=[go.Frame(data=go.Surface(
+#         z=k * np.ones((r, c)),
+#         surfacecolor=(np.abs(I[:,:,60-k])),
+#         cmin=0, cmax=5
+#         ),
+#         name=str(k) # you need to name the frame for the animation to behave properly
+#         )
+#         for k in range(nb_frames)])
+#     k = 0
+# # Add data to be displayed before animation starts
+#     fig.add_trace(go.Surface(
+#         z=6.7 * np.ones((r, c)),
+#         surfacecolor=(np.abs(I[:,:, 60-k])),
+#         colorscale='jet',
+#         cmin=0, cmax=5,
+#         colorbar=dict(thickness=20, ticklen=4)
+#         ))
 
-    def frame_args(duration):
-        return {
-                "frame": {"duration": duration},
-                "mode": "immediate",
-                "fromcurrent": True,
-                "transition": {"duration": duration, "easing": "linear"},
-            }
+#     def frame_args(duration):
+#         return {
+#                 "frame": {"duration": duration},
+#                 "mode": "immediate",
+#                 "fromcurrent": True,
+#                 "transition": {"duration": duration, "easing": "linear"},
+#             }
 
-    sliders = [
-                {
-                    "pad": {"b": 10, "t": 60},
-                    "len": 0.9,
-                    "x": 0.1,
-                    "y": 0,
-                    "steps": [
-                        {
-                            "args": [[f.name], frame_args(0)],
-                            "label": str(k),
-                            "method": "animate",
-                        }
-                        for k, f in enumerate(fig.frames)
-                    ],
-                }
-            ]    
+#     sliders = [
+#                 {
+#                     "pad": {"b": 10, "t": 60},
+#                     "len": 0.9,
+#                     "x": 0.1,
+#                     "y": 0,
+#                     "steps": [
+#                         {
+#                             "args": [[f.name], frame_args(0)],
+#                             "label": str(k),
+#                             "method": "animate",
+#                         }
+#                         for k, f in enumerate(fig.frames)
+#                     ],
+#                 }
+#             ]    
 
-    fig.update_layout(
-         title='Slices in volumetric data',
-         width=800,
-         height=800,
-         scene=dict(
-                    zaxis=dict(range=[0, 60], autorange=False),
-                    aspectratio=dict(x=1, y=1, z=1),
-                    ),
-         updatemenus = [
-            {
-                "buttons": [
-                    {
-                        "args": [None, frame_args(50)],
-                        "label": "&#9654;", # play symbol
-                        "method": "animate",
-                    },
-                    {
-                        "args": [[None], frame_args(0)],
-                        "label": "&#9724;", # pause symbol
-                        "method": "animate",
-                    },
-                ],
-                "direction": "left",
-                "pad": {"r": 10, "t": 70},
-                "type": "buttons",
-                "x": 0.1,
-                "y": 0,
-            }
-         ],
-         sliders=sliders
-)
+#     fig.update_layout(
+#          title='Slices in volumetric data',
+#          width=800,
+#          height=800,
+#          scene=dict(
+#                     zaxis=dict(range=[0, 60], autorange=False),
+#                     aspectratio=dict(x=1, y=1, z=1),
+#                     ),
+#          updatemenus = [
+#             {
+#                 "buttons": [
+#                     {
+#                         "args": [None, frame_args(50)],
+#                         "label": "&#9654;", # play symbol
+#                         "method": "animate",
+#                     },
+#                     {
+#                         "args": [[None], frame_args(0)],
+#                         "label": "&#9724;", # pause symbol
+#                         "method": "animate",
+#                     },
+#                 ],
+#                 "direction": "left",
+#                 "pad": {"r": 10, "t": 70},
+#                 "type": "buttons",
+#                 "x": 0.1,
+#                 "y": 0,
+#             }
+#          ],
+#          sliders=sliders
+# )
 
-    fig.show()
+#     fig.show()
 #     # I = np.abs(torch.Tensor.cpu(wfStack.stack).numpy())
     # max_intensity = np.max(I)
     # Z = np.arange(0, 31, 1)
