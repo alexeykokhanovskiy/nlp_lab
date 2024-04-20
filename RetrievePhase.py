@@ -67,5 +67,7 @@ def phase_retr_cycle(input_intensity, target_intensity, target_mask, iterations)
     # Extract the final phase and intensity distributions.
     phase_distribution = torch.angle(spatial_field)
     final_intensity = torch.sqrt(input_intensity) 
-
     return phase_distribution, final_intensity, eta, fourier_field
+
+if __name__ == '__main__':
+
