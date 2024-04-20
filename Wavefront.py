@@ -51,7 +51,7 @@ class Wavefront():
     
     def Gauss(self, beamFwhm):
         self.field[:] = torch.exp(-2*torch.log(2)*((self.X /beamFwhm)**2 + (self.Y /beamFwhm)**2)) 
-        self.fourier[:]= self.F(self.field ) 
+        self.fourier[:]= self.F(self.field) 
 
     def propagate_angular_spec(self, distance):
         prop_factor = torch.exp(1j*distance*self.kz)
@@ -71,7 +71,6 @@ class Wavefront():
     def Gauss(self, beamFwhm):
         self.field[:] = torch.exp(-2*torch.log(torch.tensor(2))*((self.X/beamFwhm)**2 + (self.Y/beamFwhm)**2)) 
         self.fourier[:] = self.F (self.field ) 
-        return torch.exp(-2*torch.log(torch.tensor(2))*((self.X/beamFwhm)**2 + (self.Y/beamFwhm)**2)) 
     
     def propagate_angular_spec(self, distance):
         prop_factor = torch.exp(1j*distance*self.kz)

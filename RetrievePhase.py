@@ -70,4 +70,4 @@ def phase_retr_cycle(input_intensity, target_intensity, target_mask, iterations)
     return phase_distribution, final_intensity, eta, fourier_field
 
 if __name__ == '__main__':
-
+    print('hello')
