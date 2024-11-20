@@ -1,0 +1,166 @@
+
+
+def construct_arc_matrix(matrix_size, radius, width, start_angle, end_angle):
+    """Construct a 2D matrix with filled 1 if it belongs to the arc, 0 otherwise."""
+    # Initialize the matrix
+    matrix = np.zeros((matrix_size, matrix_size))
+    
+    # Define the center of the matrix
+    center = matrix_size // 2
+    
+    # Convert angles to radians
+    start_angle = np.radians(start_angle)
+    end_angle = np.radians(end_angle)
+    
+    # Define the inner and outer radii
+    inner_radius = radius
+    outer_radius = radius + width
+    
+    for i in range(matrix_size):
+        for j in range(matrix_size):
+            # Calculate the coordinates relative to the center
+            x = j - center
+            y = i - center
+            
+            # Calculate the distance and angle from the center
+            distance = np.sqrt(x**2 + y**2)
+            angle = np.arctan2(y, x)
+            
+            # Normalize angle to be within [0, 2*pi)
+            if angle < 0:
+                angle += 2 * np.pi
+            
+            # Check if the point is within the arc
+            if (inner_radius <= distance <= outer_radius and
+                start_angle <= angle <= end_angle):
+                matrix[i, j] = 1
+    
+    return matrix
+
+# def reconstruct_wavefront(coeffs, grid_size):
+#     """Reconstruct the wavefront from Zernike coefficients"""
+#     y, x = np.indices((grid_size, grid_size))
+#     x = x - grid_size // 2
+#     y = y - grid_size // 2
+#     rho = np.sqrt(x**2 + y**2) / (grid_size // 2)
+#     theta = np.arctan2(y, x)
+#     rho[rho > 1] = 0  # Mask out the values outside the unit circle
+
+#     wavefront = np.zeros((grid_size, grid_size))
+
+#     polynomial_index = 0
+#     for n in range(int(np.sqrt(len(coeffs)))):
+#         for m in range(-n, n + 1, 2):
+#             if polynomial_index < len(coeffs):
+#                 Z = zernike(n, m, rho, theta)
+#                 wavefront += coeffs[polynomial_index] * Z
+#                 polynomial_index += 1
+    
+#     return wavefront
+
+# from LightPipes import *
+# import math
+# import matplotlib.pyplot as plt
+# import numpy as np
+# # # Example usage
+# N=2**8
+# radius = 300
+
+# width = 20
+# start_angle = 0
+# end_angle = 180
+# arc_matrix = construct_arc_matrix(N, radius, width, start_angle, end_angle)
+# wavelength=500e-9
+# size=4.0e-3
+# A = wavelength/(2*math.pi*math.sqrt(2*(2+1)))
+# F= Begin(size,wavelength,N)
+# F= Begin(size,wavelength,N)
+
+# F = Zernike(F, 1, -1, R = 1e-3, A=A, norm=True, units='opd')
+# F = Zernike(F, 1, 1, R = 1e-3, A=A, norm=True, units='opd')
+# F = CircAperture(F, R = 1e-3)
+# # F=Zernike(4,0,size/2,A,F)
+# # F.field = np.exp(1j*arc_matrix)
+# # a,b = ZernikeFit(F, 100, 1)
+# # print(a,b)    
+# plt.imshow(np.angle(F.field))
+# plt.show()
+
+
+import numpy as np
+from LightPipes import *
+import math
+import matplotlib.pyplot as plt
+def generate_zernike_indices(max_n):
+    indices = []
+    for n in range(max_n + 1):
+        for m in range(-n, n + 1):
+            if (n - abs(m)) % 2 == 0:
+                indices.append((n, m))
+    return indices
+
+
+def generate_random_coefficients(n, total=1):
+    # Use the Dirichlet distribution to generate coefficients
+    coefficients = np.random.dirichlet(np.ones(n))
+    # Scale coefficients to sum up to 'total' (optional, default is 1)
+    coefficients *= total
+    return coefficients
+
+N=2**10
+wavelength=500e-9
+size=2.0e-3
+R = 1e-3
+A = wavelength/(2*math.pi*math.sqrt(2*(2+1)))
+
+max_n = 10  # You can change this value to generate more indices
+zernike_indices = generate_zernike_indices(max_n)
+zernike_stack = np.zeros((N,N, len(zernike_indices)))
+for idx,item in enumerate(zernike_indices):
+    F = Begin(size,wavelength,N)
+    F = Zernike(F, item[0], item[1], R = 1e-3, A=2*A, norm=True, units='opd')
+    F = CircAperture(F, R = 1e-3)
+    zernike_stack[:,:,idx] = np.angle(F.field)
+
+
+Zernike_weights = generate_random_coefficients(n = len(zernike_indices))
+
+phase_mask = np.zeros((N,N))
+for idx, item in enumerate(Zernike_weights):
+    phase_mask += item*zernike_stack[:,:,idx]
+
+F = Begin(size,wavelength,N)
+F = GaussBeam(F, w0 = 1e-3)
+
+
+print(phase_mask)
+# plt.imshow(np.angle(F.field))
+# plt.show()
+# F = Lens(F, f= 100e-3)
+# F.field *= np.exp(1j * phase_mask)
+
+# F = Forvard(F, 110e-3)
+# plt.subplot(2,1,1)
+# I = Intensity(F)
+# plt.imshow(I)
+# plt.subplot(2,1,2)
+# Phs = Phase(F)
+# plt.imshow(Phs)
+
+# plt.show()
+
+
+
+# print(zernike_indices[2][0]
+# coefficients = generate_random_coefficients(n)
+
+    
+    
+    # plt.plot(Zernike())
+    # print(idx)
+
+
+# # Example usage:
+# n =   # Number of coefficients
+# print(coefficients)
+# print(f"Sum of coefficients: {np.sum(coefficients)}")

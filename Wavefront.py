@@ -89,6 +89,7 @@ class Wavefront():
         self.field[:] *= torch.sqrt(self.X **2 + self.Y **2) < Radius
         self.fourier[:] = self.F (self.field )
 
+
     def BlockAperture(self, Radius):
         self.field[:] *= torch.sqrt(self.X **2 + self.Y **2) > Radius
         self.fourier[:] = self.F (self.field )
@@ -142,7 +143,11 @@ class Wavefront():
         image = 255 - torch.from_numpy(image)
         self.field[:] = image/torch.max(image)
         self.fourier[:] = self.F(self.field)
-    
+
+    def PhasePlate(self, m_order):
+        self.field[:] *= torch.exp(-1j*m_order*torch.arctan2(self.Y , self.X))
+        self.fourier[:] = self.F(self.field)
+
     def get_intensity(self):
         return torch.abs(torch.Tensor.cpu(self.field))
 
@@ -182,22 +187,28 @@ class WavefrontStack():
     def get_shape(self):
         return self.stack.shape
 
-    def resize(self, size):
-        wfStack_resized = WavefrontStack()
-        wfStack_resized.stack = np.zeros((size,size, self.stack.shape[2]))
+    def resize_intensity(self, size):
+        wfStack_resized = np.zeros((size,size, self.stack.shape[2]))
+        for i in range(0, self.stack.shape[2]):
+            wfStack_resized[:,:,i] = cv2.resize(np.abs(torch.Tensor.cpu(self.stack[:,:,i]).numpy()), (size, size), interpolation=cv2.INTER_LINEAR)
+        return  wfStack_resized
+    
+    # wfStack_compressed = np.zeros((256,256, wfStack.stack.shape[2]))
+    # for i in range(0, wfStack.stack.shape[2]):
+    #     wfStack_compressed[:,:,i] = image = cv2.resize(np.abs(wfStack.stack[:,:,i]), (256, 256), interpolation=cv2.INTER_LINEAR) 
+    
 
-
-    def plot_slices_3d(self, I):
+    def plot_slices_3d(self, wfStack_compressed):
         I = np.abs(wfStack_compressed)
         max_intensity = np.max(I)
         print(max_intensity)
         # print(wfStack.stack[:,:,1].shape)
         # fig = go.Figure(data=[go.Surface(z=np.abs(wfStack.stack))])
-        nb_frames = 60
+        nb_frames = I.shape[2]
         r, c =  I[:,:,0].shape
         fig = go.Figure(frames=[go.Frame(data=go.Surface(
             z=k * np.ones((r, c)),
-            surfacecolor=(np.abs(I[:,:,60-k])),
+            surfacecolor=(np.abs(I[:,:,nb_frames-k])),
             cmin=0, cmax=5
             ),
             name=str(k) # you need to name the frame for the animation to behave properly
@@ -207,7 +218,7 @@ class WavefrontStack():
     # Add data to be displayed before animation starts
         fig.add_trace(go.Surface(
             z=6.7 * np.ones((r, c)),
-            surfacecolor=(np.abs(I[:,:, 60-k])),
+            surfacecolor=(np.abs(I[:,:, nb_frames-k])),
             colorscale='jet',
             cmin=0, cmax=5,
             colorbar=dict(thickness=20, ticklen=4)
@@ -223,7 +234,7 @@ class WavefrontStack():
 
         sliders = [
                     {
-                        "pad": {"b": 10, "t": 60},
+                        "pad": {"b": 10, "t": nb_frames},
                         "len": 0.9,
                         "x": 0.1,
                         "y": 0,
@@ -243,7 +254,7 @@ class WavefrontStack():
             width=800,
             height=800,
             scene=dict(
-                        zaxis=dict(range=[0, 60], autorange=False),
+                        zaxis=dict(range=[0, nb_frames], autorange=False),
                         aspectratio=dict(x=1, y=1, z=1),
                         ),
             updatemenus = [
@@ -273,27 +284,35 @@ class WavefrontStack():
 
 if __name__ == "__main__":
 
-    wf = Wavefront(pixelNumber= 2**8, Lfield = 10e-3, wl = 1064e-9, device = 'cpu')
+    wf = Wavefront(pixelNumber= 2**14, Lfield = 10e-3, wl = 1064e-9, device = 'cuda')
     wfStack = WavefrontStack(wf, to_device=True)
-    wf.Gauss(beamFwhm=1e-3)
-    wf.Vortex(Radius=1e-3)
-    wf.CylindricalLens(focalLength=150e-3, angle = 45)
-    step = 5e-3
-    nb_frames = 60
-    z = np.linspace(0, 300e-3, nb_frames)
-    # step = z[1] - z[0]
-    for item in z:
-        wf.propagate_angular_spec(step)
-        wfStack.insert_in_device(wf)
+    wf.Gauss(beamFwhm=3e-3)
+    wf.DiffractionGrating(focalLength=100e-3, x0 = 500e-6, y0 = 0)
+    # wf.CircularAperture(Radius = 2e-3)
+    # y = torch.angle(wf.field)
+    # y *= torch.sqrt(wf.X **2 + wf.Y **2) < 2e-3
+    # plt.imshow(y)
+    # plt.show()
 
-    wfStack.save('test.h5')
-    wfStack.load('test.h5')
-    wfStack_compressed = np.zeros((256,256, wfStack.stack.shape[2]))
-    for i in range(0, wfStack.stack.shape[2]):
-        wfStack_compressed[:,:,i] = image = cv2.resize(np.abs(wfStack.stack[:,:,i]), (256, 256), interpolation=cv2.INTER_LINEAR) 
+
+    # wf.Vortex(Radius=1e-3)
+    # wf.CylindricalLens(focalLength=150e-3, angle = 45)
+    # step = 5e-3
+    # nb_frames = 60
+    # z = np.linspace(0, 300e-3, nb_frames)
+    # # step = z[1] - z[0]
+    # for item in z:
+    #     wf.propagate_angular_spec(step)
+    #     wfStack.insert_in_device(wf)
+
+    # wfStack.save('test.h5')
+    # wfStack.load('test.h5')
+    # wfStack_compressed = np.zeros((256,256, wfStack.stack.shape[2]))
+    # for i in range(0, wfStack.stack.shape[2]):
+    #     wfStack_compressed[:,:,i] = image = cv2.resize(np.abs(wfStack.stack[:,:,i]), (256, 256), interpolation=cv2.INTER_LINEAR) 
     
-    I = np.abs(wfStack_compressed)
-    wfStack.plot_slices_3d(I)
+    # I = np.abs(wfStack_compressed)
+    # wfStack.plot_slices_3d(I)
 #     max_intensity = np.max(I)
 #     print(max_intensity)
 #     # print(wfStack.stack[:,:,1].shape)

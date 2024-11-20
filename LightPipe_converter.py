@@ -1,5 +1,5 @@
 import LightPipes
-from Wavefront import Wavefront
+from Wavefront import Wavefront, WavefrontStack
 import matplotlib.pyplot as plt
 import torch
 import time
@@ -47,20 +47,32 @@ if __name__ == "__main__":
     w0/=(g1+g2-2*g2)**0.5
     F=LightPipes.Begin(size,labda,N)
     F=LightPipes.GaussLaguerre(F, w0, p=np_, l=nl_, A=1.0, ecs=0)
-    wf = import_light_pipe(F, "")
+    wf = import_light_pipe(F)
+    wfStack = WavefrontStack(wf, to_device=True)
+    wfStack.insert_in_device(wf)
     start_time = time.time()
     wf.propagate_angular_spec(d2)
+    wfStack.insert_in_device(wf)
     wf.ThinLens(focalLength=fM2)
     wf.propagate_angular_spec(d3)
+    wfStack.insert_in_device(wf)
     wf.ThinLens(f2)
+    wfStack.insert_in_device(wf)
     wf.propagate_angular_spec(d4)
     wf.CylindricalLens(f3, angle = 45)
     wf.propagate_angular_spec(d5)
+    wfStack.insert_in_device(wf)
     wf.CylindricalLens(f4, angle = 45)
     wf.propagate_angular_spec(27e-3)
+    wfStack.insert_in_device(wf)
     wf.propagate_angular_spec(25e-3) # propagate to have sufficient large beam size
-    plt.imshow(wf.get_intensity())
-    plt.show()
+    wfStack.insert_in_device(wf)
+    wfStackIntensity = wfStack.resize_intensity(size = 256)
+
+    wfStack.plot_slices_3d(wfStackIntensity)
+
+    # plt.imshow(wf.get_intensity())
+    # plt.show()
 
     end_time = time.time()
     elapsed_time = end_time - start_time

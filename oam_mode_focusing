@@ -1,0 +1,30 @@
+
+from Wavefront import Wavefront 
+import matplotlib.pyplot as plt
+wf = Wavefront(pixelNumber= 2**12, Lfield = 10e-3, wl = 1064e-9, device = 'cuda')
+
+
+
+fig, _axs = plt.subplots(nrows = 2, ncols=4,figsize=(8.0,6.5))
+fig.suptitle('Focusing OAM beam by lens')
+fig.subplots_adjust(hspace=0.3)
+axs = _axs.flatten()
+
+N = wf.pixelNumber
+
+for i in range(0,4):
+    wf.Gauss(1e-3)
+    wf.PhasePlate(i)
+    wf.ThinLens(100e-3)
+    wf.propagate_angular_spec(100e-3)
+    axs[i].imshow(wf.get_intensity()[N//2 - N//10:N//2 + N//10, N//2 - N//10:N//2 + N//10],cmap='jet')
+    axs[i].grid(color='white', ls='solid')
+    axs[i].axis('off')
+    axs[i].set_title(f'Intensity of order m = {i}')
+
+    axs[i+4].imshow(wf.get_phase(),cmap='jet')
+    axs[i+4].grid(color='white', ls='solid')
+    axs[i+4].axis('off')
+    axs[i+4].set_title(f'Phase of order m = {i}')
+
+plt.show()
